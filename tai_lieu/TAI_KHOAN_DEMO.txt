@@ -1,0 +1,21 @@
+Tài khoản thử No Nê
+
+Đăng nhập bằng email, phân biệt chữ hoa/thường trong mật khẩu.
+
+| Vai trò | Email | Mật khẩu |
+|---|---|---|
+| Admin ứng dụng | admin@example.com | Demo1234 |
+| Chủ quán Phở Hà Nội | pho@example.com | Demo1234 |
+| Chủ quán Pizza Nhà Mình | pizza@example.com | Demo1234 |
+| Khách đặt món | khach@example.com | Demo1234 |
+
+Các tài khoản này đã tồn tại trong Firebase no-ne-food, không cần đăng ký lại. Email thuộc miền ví dụ nên không nhận được thư đặt lại mật khẩu. Mật khẩu demo được công khai theo quyết định của nhóm ngày 28/11/2026.
+
+- Khách đặt món và theo dõi đơn của mình.
+- Chủ quán Phở quản lý thực đơn và đơn thuộc quán Phở.
+- Chủ quán Pizza ban đầu chờ duyệt; trạng thái có thể thay đổi khi nhóm thử admin.
+- Admin ứng dụng duyệt/khóa quán, quản lý trạng thái tài khoản khách và xem các đơn.
+
+Đây là các vai trò trong ứng dụng. Để vào Firebase Console, mỗi thành viên dùng Gmail riêng đã được cấp quyền dự án.
+
+Thông tin đăng nhập đã đồng bộ với Firebase; việc rút gọn email giữ nguyên UID, quán, món và đơn. Trạng thái dữ liệu là dùng chung giữa các máy.

@@ -1,0 +1,64 @@
+Android và ảnh thật trên Firebase miễn phí
+
+Ứng dụng Android com.example.do_an đã đăng ký trong Firebase chung no-ne-food. Cấu hình Android và Web có trong cauhinh_firebase.nhom.json; dùng cùng tài khoản demo và dữ liệu quán/đơn hiện có.
+
+Chạy Android
+
+1. Mở Android Studio → Open → chọn toàn bộ thư mục do_an chứa pubspec.yaml (trên máy Hiền là C:\Flutter_CN\do_an), không mở riêng thư mục android/. Android Studio cần plugin Flutter và Dart.
+2. Kết nối điện thoại đã bật USB debugging, hoặc khởi động máy ảo Android.
+3. Nếu vừa lấy cấu hình nhóm mới, sao chép lại cấu hình trên máy:
+
+Copy-Item cauhinh_firebase.nhom.json cauhinh_firebase.json
+flutter pub get
+flutter devices
+flutter run --dart-define-from-file=cauhinh_firebase.json
+
+Trong Android Studio: Run → Edit Configurations → thêm/chọn cấu hình Flutter; Dart entrypoint là lib/main.dart; Additional run args nhập --dart-define-from-file=cauhinh_firebase.json. Chọn thiết bị Android rồi nhấn Run. Có thể chạy lệnh ở Terminal bên trên nếu muốn.
+
+Chọn thiết bị Android khi được hỏi. Trong VS Code cũng có thể chọn thiết bị ở thanh dưới cùng, rồi chạy cấu hình No Nê · Android Firebase.
+
+Để tạo APK thử nghiệm:
+
+flutter build apk --debug --dart-define-from-file=cauhinh_firebase.json
+
+APK nằm ở build/app/outputs/flutter-apk/app-debug.apk. Bản này ký bằng khóa debug, phục vụ chạy đồ án. Cấu hình Gradle giới hạn bộ nhớ cho máy khoảng 8 GB RAM.
+
+Ảnh được lưu ở đâu?
+
+Nhóm giữ gói Spark, không liên kết tài khoản thanh toán. COD là cách khách trả tiền món ăn; không phải gói dịch vụ của Google.
+
+Ảnh hiện dùng Cloud Firestore, không cần bật Firebase Storage:
+
+- Chọn ảnh JPG, PNG hoặc WebP từ thiết bị, tối đa 5 MB và 24 megapixel.
+- Ứng dụng xoay đúng chiều ảnh, thu nhỏ và nén JPEG xuống tối đa 200 KB trước khi ghi.
+- Document ảnh quán: anhquanan/{uid_chu_quan}.
+- Document ảnh món: anhmonan/{uid_chu_quan}/anhmon/{mamon}.
+- Mỗi document có dulieu (chuỗi Base64 JPEG), loaitep, ngaycapnhat. Bản ghi quán/món lưu đường dẫn document trong duongdananh.
+- Ảnh và thông tin liên quan ghi chung một batch: lỗi quyền/giá/dữ liệu sẽ không lưu riêng một nửa.
+- Trường dulieu được loại khỏi chỉ mục qua firestore.indexes.json. Danh sách quán/món không nhúng toàn bộ bytes ảnh vào từng bản ghi nghiệp vụ.
+- Ảnh được đọc bằng Firebase Authentication và Firestore Rules; ảnh thay đổi được cập nhật theo thời gian thực.
+
+Ảnh của 2 quán và 8 món mẫu đã được sao chép từ ảnh minh họa Unsplash sang Firestore. Ứng dụng ưu tiên ảnh trong Firestore; các bản ghi cũ chưa chuyển vẫn có ảnh mẫu dự phòng. Công cụ node congcu/nap_anh_mau.cjs dùng tài khoản cục bộ của hai chủ quán để chuyển những ảnh mẫu còn thiếu; không ghi đè ảnh đã có.
+
+Thử tải ảnh
+
+1. Đăng nhập pho@example.com, mở Thực đơn → Chỉnh sửa → Chọn ảnh từ thiết bị → Lưu món ăn.
+2. Mở Quán ăn → Chỉnh sửa thông tin quán, chọn ảnh khác rồi lưu.
+3. Đăng nhập khách ở trình duyệt/thiết bị khác, mở quán/thực đơn để xem ảnh mới.
+4. Thử đăng ký quán mới: ảnh quán vẫn bắt buộc, nhưng lưu bằng Firestore thay vì Storage. Admin xem ảnh rồi duyệt quán.
+
+Mật khẩu demo xem trong TAI_KHOAN_DEMO.txt. Chủ quán không sửa ảnh của quán khác; khách không tải ảnh vào quán; quán bị khóa không đổi ảnh; ảnh quán chờ duyệt chỉ chủ quán/admin được xem.
+
+Hạn mức
+
+Firestore Spark có hạn mức miễn phí, không phải lưu/đọc ảnh không giới hạn. Ảnh nén trong Firestore phù hợp phạm vi demo nhỏ; khi có nhiều ảnh/người dùng, nên chuyển bytes ảnh sang dịch vụ lưu trữ chuyên dụng. Nhóm hiện không bật thanh toán tự động.
+
+Tham khảo: Hạn mức Firestore (https://firebase.google.com/docs/firestore/quotas).
+
+Bật hoặc tạm dừng nhận đơn
+
+Chủ quán mở Đơn hàng → dùng công tắc Đang nhận đơn / Tạm dừng nhận đơn. Khi tạm dừng, khách vẫn xem thực đơn nhưng không thêm món/đặt đơn mới. Đơn đã nhận vẫn xử lý và thu COD bình thường. Khi bật lại, khách nhận trạng thái mới theo thời gian thực. Quán chờ duyệt hoặc bị khóa không tự bật quyền nhận đơn.
+
+Kiểm tra của bản cập nhật
+
+Đã tạo thành công APK debug Android. Đã đạt 24 kiểm tra Flutter và 98 kiểm tra phân quyền/nghiệp vụ trên Firebase Emulator. Chưa chạy thử tương tác trên máy ảo hoặc điện thoại Android.

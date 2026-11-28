@@ -1,0 +1,28 @@
+  rules_version = '2';
+  service firebase.storage {
+    match /b/{kho}/o {
+      function ladungnguoi(uid) { return request.auth != null && request.auth.uid == uid; }
+      function chuacohoso(uid) {
+        return !firestore.exists(/databases/(default)/documents/nguoidung/$(uid));
+      }
+      function laadmin() {
+      return firestore.exists(/databases/(default)/documents/nguoidung/$(request.auth.uid))
+        && firestore.get(/databases/(default)/documents/nguoidung/$(request.auth.uid)).data.loaitaikhoan == 'quantrivien'
+        && firestore.get(/databases/(default)/documents/nguoidung/$(request.auth.uid)).data.trangthai == 'hoatdong';
+    }
+    function quancongkhai(uid) {
+      return firestore.exists(/databases/(default)/documents/quanan/$(uid))
+        && firestore.get(/databases/(default)/documents/quanan/$(uid)).data.trangthai == 'hoatdong';
+      }
+      match /anhquanan/{uid}/{tenanh} {
+      allow read: if request.auth != null && (ladungnguoi(uid) || quancongkhai(uid) || laadmin());
+        allow create, update: if ladungnguoi(uid) && chuacohoso(uid)
+          && request.resource.size > 0 && request.resource.size <= 5 * 1024 * 1024
+          && ((tenanh == 'anhdaidien.jpg' && request.resource.contentType == 'image/jpeg')
+            || (tenanh == 'anhdaidien.png' && request.resource.contentType == 'image/png')
+            || (tenanh == 'anhdaidien.webp' && request.resource.contentType == 'image/webp'));
+        allow delete: if ladungnguoi(uid) && chuacohoso(uid);
+      }
+      match /{duongdan=**} { allow read, write: if false; }
+    }
+  }

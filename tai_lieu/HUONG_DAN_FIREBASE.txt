@@ -1,0 +1,49 @@
+Firebase dùng chung cho No Nê
+
+Dự án no-ne-food đã có Firebase Authentication, Cloud Firestore, ứng dụng Web và Android com.example.do_an. Nhóm giữ gói Spark, chưa liên kết thanh toán.
+
+Thành viên lấy mã về chạy
+
+Không tạo lại Firebase project. Mở thư mục do_an, chạy:
+
+Copy-Item cauhinh_firebase.nhom.json cauhinh_firebase.json
+flutter pub get
+flutter run -d chrome --dart-define-from-file=cauhinh_firebase.json
+
+Để chạy Android, chọn điện thoại/máy ảo trong VS Code và cấu hình No Nê · Android Firebase. Xem HUONG_DAN_ANDROID_VA_ANH.txt.
+
+cauhinh_firebase.nhom.json và android/app/google-services.json là cấu hình client của ứng dụng. Không chứa tài khoản Google, mật khẩu Google hay khóa riêng service account. Cấu hình riêng từng máy là cauhinh_firebase.json và được bỏ qua bởi Git.
+
+Đăng nhập và dữ liệu
+
+- Firebase Authentication quản lý mật khẩu. Ứng dụng đăng nhập bằng email/mật khẩu; tên tài khoản duy nhất dùng trong hồ sơ.
+- Collection nguoidung lưu hồ sơ theo UID; tendangnhap giữ chỉ mục tên tài khoản.
+- quanan/{uid} lưu hồ sơ quán, quanan/{uid}/monan/{mamon} lưu thực đơn.
+- donhang lưu đơn COD và trạng thái giao/thu tiền độc lập.
+- anhquanan/{uid} và anhmonan/{uid}/anhmon/{mamon} lưu ảnh JPEG nén, tối đa 200 KB mỗi ảnh, dưới dạng chuỗi Base64.
+
+Đăng ký khách yêu cầu tên tài khoản, email, số điện thoại, mật khẩu và xác nhận. Họ tên/địa chỉ bổ sung sau trong hồ sơ. Đăng ký quán yêu cầu thêm tên quán, địa chỉ và ảnh quán. Tên tài khoản 4–30 ký tự không dấu; không có đăng ký admin trong ứng dụng.
+
+Ảnh và quyền
+
+Ảnh chọn từ thiết bị tối đa 5 MB và 24 megapixel, được kiểm tra định dạng/giải mã rồi nén JPEG tối đa 200 KB trước khi lưu. Ảnh và bản ghi quán/món liên quan được ghi cùng batch Firestore; không tải lên Firebase Storage và không có bước bật Blaze.
+
+Chủ quán chỉ sửa ảnh của mình, kể cả khi đang chờ duyệt. Khách chỉ xem ảnh của quán đã hoạt động. Admin ứng dụng được xem ảnh hồ sơ để duyệt. Quán bị khóa không được thay ảnh.
+
+Firestore Rules kiểm tra vai trò, đường dẫn ảnh cùng chủ quán/món, khung mã hóa JPEG, giới hạn độ dài và thời gian máy chủ. Rules không tự giải mã nội dung JPEG; ứng dụng kiểm tra ảnh đầu vào và xử lý an toàn khi không đọc được ảnh.
+
+firestore.indexes.json loại trường dulieu của ảnh khỏi chỉ mục. Firebase Spark có hạn mức miễn phí; cách lưu ảnh này dùng cho đồ án nhỏ, không phải kho ảnh không giới hạn. Hạn mức tham khảo: https://firebase.google.com/docs/firestore/quotas .
+
+Khi thay đổi Rules
+
+Chạy kiểm thử Emulator trước; chỉ người phụ trách Firebase triển khai lên dự án dùng chung:
+
+firebase deploy --only firestore:rules,firestore:indexes --project no-ne-food
+
+Thành viên chỉ chạy ứng dụng không cần triển khai lại Rules hoặc nạp lại dữ liệu. storage.rules được giữ cho ảnh Storage cũ và các kiểm thử tương thích, không phải dịch vụ ảnh đang dùng trong bản hiện tại.
+
+Nếu đăng ký Android ở môi trường khác
+
+Ứng dụng của nhóm đã được đăng ký với package com.example.do_an. Có thể tải lại google-services.json từ Firebase Console → Project settings → Your apps → Android; công cụ node congcu/tao_cauhinh_firebase.cjs "duongdan/google-services.json" cập nhật phần Android và giữ cấu hình Web đang có.
+
+Không chia sẻ tài khoản Google. Mỗi thành viên dùng Gmail riêng đã được cấp quyền dự án nếu cần vào Firebase Console. Tài khoản admin trong app xem ở TAI_KHOAN_DEMO.txt, là loại tài khoản riêng với quyền Console.
