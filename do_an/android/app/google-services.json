@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "35241698557",
+    "project_id": "no-ne-food",
+    "storage_bucket": "no-ne-food.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:35241698557:android:5b0b54d09d6a838e0cca94",
+        "android_client_info": {
+          "package_name": "com.example.do_an"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCcu204epsn2Lda6jL-dqeshedgMpSQzl4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,7 @@
+{
+  "indexes": [],
+  "fieldOverrides": [
+    {"collectionGroup": "anhquanan", "fieldPath": "dulieu", "indexes": []},
+    {"collectionGroup": "anhmon", "fieldPath": "dulieu", "indexes": []}
+  ]
+}

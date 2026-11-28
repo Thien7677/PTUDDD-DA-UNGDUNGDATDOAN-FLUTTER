@@ -203,14 +203,15 @@ class TrangThucDon extends StatefulWidget {
 
 class _TrangThaiThucDon extends State<TrangThucDon> {
   late final _luong = widget.kho.theoDoiMon(widget.quan.id);
+  late final _luongQuan = widget.kho.theoDoiQuanCuaToi(widget.quan.id);
   String _nhom = 'Tất cả';
-  Future<void> _them(MonAn mon) async {
-    if (!widget.quan.dangmocua) return;
-    if (!widget.gio.rong && widget.gio.quan?.id != widget.quan.id) {
+  Future<void> _them(MonAn mon, QuanAn quan) async {
+    if (!quan.dangmocua) return;
+    if (!widget.gio.rong && widget.gio.quan?.id != quan.id) {
       if (!await xacNhan(
         context,
         'Đổi sang quán mới?',
-        'Giỏ hàng đang có món từ ${widget.gio.quan!.tenquan}. Tiếp tục sẽ xóa giỏ cũ để chọn món của ${widget.quan.tenquan}.',
+        'Giỏ hàng đang có món từ ${widget.gio.quan!.tenquan}. Tiếp tục sẽ xóa giỏ cũ để chọn món của ${quan.tenquan}.',
         nut: 'Đổi quán và xóa giỏ cũ',
       )) {
         return;
@@ -218,15 +219,32 @@ class _TrangThaiThucDon extends State<TrangThucDon> {
       widget.gio.xoa();
     }
     try {
-      widget.gio.them(widget.quan, mon);
+      widget.gio.them(quan, mon);
     } catch (loi) {
       if (mounted) baoLoi(context, loi);
     }
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(widget.quan.tenquan)),
+  Widget build(BuildContext context) => StreamBuilder<QuanAn?>(
+    stream: _luongQuan,
+    initialData: widget.quan,
+    builder: (context, s) {
+      if (s.hasError || s.data == null) {
+        return Scaffold(
+          appBar: AppBar(title: const Text('Thực đơn')),
+          body: const TrangRong(
+            'Quán hiện chưa phục vụ',
+            'Vui lòng chọn quán khác hoặc thử lại sau.',
+          ),
+        );
+      }
+      return _trang(s.data!);
+    },
+  );
+
+  Widget _trang(QuanAn quan) => Scaffold(
+    appBar: AppBar(title: Text(quan.tenquan)),
     body: Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 720),
@@ -234,32 +252,29 @@ class _TrangThaiThucDon extends State<TrangThucDon> {
           padding: const EdgeInsets.all(20),
           children: [
             AnhMon(
-              anhmau: widget.quan.anhmau,
-              duongdananh: widget.quan.duongdananh,
+              anhmau: quan.anhmau,
+              duongdananh: quan.duongdananh,
               height: 200,
               width: double.infinity,
             ),
             const SizedBox(height: 18),
             Text(
-              widget.quan.tenquan,
+              quan.tenquan,
               style: const TextStyle(fontSize: 27, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 12),
             Align(
               alignment: Alignment.centerLeft,
               child: NhanTrangThai(
-                widget.quan.dangmocua ? 'Đang mở cửa' : 'Quán tạm nghỉ',
-                xanh: widget.quan.dangmocua,
+                quan.dangmocua ? 'Đang nhận đơn' : 'Quán tạm dừng nhận đơn',
+                xanh: quan.dangmocua,
               ),
             ),
             const SizedBox(height: 12),
-            Text(
-              widget.quan.diachi,
-              style: const TextStyle(color: MauSac.chuphu),
-            ),
+            Text(quan.diachi, style: const TextStyle(color: MauSac.chuphu)),
             const SizedBox(height: 8),
             Text(
-              'Phí giao hàng ${tienViet(widget.quan.phigiaohang)} · Thanh toán COD',
+              'Phí giao hàng ${tienViet(quan.phigiaohang)} · Thanh toán COD',
               style: const TextStyle(color: MauSac.chuphu, fontSize: 12),
             ),
             const SizedBox(height: 18),
@@ -301,7 +316,12 @@ class _TrangThaiThucDon extends State<TrangThucDon> {
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            AnhMon(anhmau: m.anhmau, width: 76, height: 94),
+                            AnhMon(
+                              anhmau: m.anhmau,
+                              duongdananh: m.duongdananh,
+                              width: 76,
+                              height: 94,
+                            ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
@@ -333,8 +353,8 @@ class _TrangThaiThucDon extends State<TrangThucDon> {
                               ),
                             ),
                             IconButton.filledTonal(
-                              onPressed: widget.quan.dangmocua
-                                  ? () => _them(m)
+                              onPressed: quan.dangmocua
+                                  ? () => _them(m, quan)
                                   : null,
                               tooltip: 'Thêm ${m.tenmon}',
                               icon: const Icon(Icons.add),
@@ -438,7 +458,12 @@ class _TrangThaiGioHang extends State<TrangGioHang> {
                 children: [
                   Row(
                     children: [
-                      AnhMon(anhmau: d.mon.anhmau, width: 72, height: 80),
+                      AnhMon(
+                        anhmau: d.mon.anhmau,
+                        duongdananh: d.mon.duongdananh,
+                        width: 72,
+                        height: 80,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(

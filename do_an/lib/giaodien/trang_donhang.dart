@@ -4,6 +4,7 @@ import '../mohinh/ban_hang.dart';
 import '../mohinh/hoso_nguoidung.dart';
 import 'thanhphan/ban_hang.dart';
 import 'thanhphan/chude.dart';
+import 'thanhphan/congtac_nhandon.dart';
 
 class DanhSachDon extends StatefulWidget {
   const DanhSachDon({
@@ -39,6 +40,8 @@ class _TrangThaiDanhSachDon extends State<DanhSachDon> {
           ),
           const SizedBox(height: 16),
           if (laquan) ...[
+            CongTacNhanDon(kho: widget.kho, uid: widget.hoso.manguoidung,
+              duocnhan: widget.hoso.trangthai == 'hoatdong'),
             Row(
               children: [
                 for (final muc in [

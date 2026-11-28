@@ -1,4 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'dart:convert';
+import 'dart:typed_data';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import '../../dichvu/kho_taikhoan.dart';
@@ -229,7 +232,7 @@ class AnhMon extends StatefulWidget {
 }
 
 class _TrangThaiAnh extends State<AnhMon> {
-  Future<String>? _anh;
+  Stream<Uint8List?>? _anh;
   @override
   void initState() {
     super.initState();
@@ -243,9 +246,24 @@ class _TrangThaiAnh extends State<AnhMon> {
   }
 
   void _docAnh() {
-    _anh = widget.duongdananh.isNotEmpty && Firebase.apps.isNotEmpty
-        ? FirebaseStorage.instance.ref(widget.duongdananh).getDownloadURL()
-        : null;
+    final vitri = widget.duongdananh;
+    if (vitri.isEmpty || Firebase.apps.isEmpty) {
+      _anh = null;
+      return;
+    }
+    if (RegExp(
+      r'^anhquanan/[^/]+$|^anhmonan/[^/]+/anhmon/[^/]+$',
+    ).hasMatch(vitri)) {
+      _anh = FirebaseFirestore.instance.doc(vitri).snapshots().map((d) {
+        final dulieu = d.data()?['dulieu'];
+        return dulieu is String ? base64Decode(dulieu) : null;
+      });
+    } else {
+      _anh = FirebaseStorage.instance
+          .ref(vitri)
+          .getData(5 * 1024 * 1024)
+          .asStream();
+    }
   }
 
   Widget _hinh(String? url) => url == null
@@ -269,7 +287,19 @@ class _TrangThaiAnh extends State<AnhMon> {
     borderRadius: BorderRadius.circular(12),
     child: _anh == null
         ? _hinh(AnhMon.duongdanmau[widget.anhmau])
-        : FutureBuilder<String>(future: _anh, builder: (_, s) => _hinh(s.data)),
+        : StreamBuilder<Uint8List?>(
+            stream: _anh,
+            builder: (_, s) => s.hasError || s.data == null
+                ? _trong()
+                : Image.memory(
+                    s.data!,
+                    width: widget.width,
+                    height: widget.height,
+                    fit: BoxFit.cover,
+                    cacheWidth: 960,
+                    errorBuilder: (_, _, _) => _trong(),
+                  ),
+          ),
   );
 }
 

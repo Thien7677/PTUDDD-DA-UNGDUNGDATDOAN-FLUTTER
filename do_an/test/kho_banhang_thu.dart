@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:do_an/dichvu/kho_banhang.dart';
 import 'package:do_an/mohinh/ban_hang.dart';
 import 'package:do_an/mohinh/hoso_nguoidung.dart';
+import 'package:do_an/mohinh/anh_quan.dart';
 
 const quanThu = QuanAn(
   id: 'chuquan',
@@ -25,6 +26,7 @@ class KhoBanHangThu implements KhoBanHang {
   List<MonAn> cacmon = [monThu];
   final List<DonHang> cacdon = [];
   final _don = StreamController<List<DonHang>>.broadcast();
+  final _quan = StreamController<QuanAn>.broadcast();
   int solandat = 0;
   MonAn? mondaluu;
   String? quandaduyet;
@@ -32,7 +34,10 @@ class KhoBanHangThu implements KhoBanHang {
   Stream<List<QuanAn>> theoDoiQuan({bool tatca = false}) =>
       Stream.value(cacquan);
   @override
-  Stream<QuanAn?> theoDoiQuanCuaToi(String uid) => Stream.value(cacquan.first);
+  Stream<QuanAn?> theoDoiQuanCuaToi(String uid) async* {
+    yield cacquan.first;
+    yield* _quan.stream;
+  }
   @override
   Stream<List<MonAn>> theoDoiMon(String quanid) =>
       Stream.value(cacmon.where((m) => m.quanid == quanid).toList());
@@ -45,14 +50,28 @@ class KhoBanHangThu implements KhoBanHang {
   @override
   Stream<List<HoSoNguoiDung>> theoDoiNguoiDung() => Stream.value([]);
   @override
-  Future<void> luuMon(MonAn mon) async {
+  Future<void> luuMon(MonAn mon, {AnhQuan? anh}) async {
     mondaluu = mon;
   }
 
   @override
   Future<void> anMon(MonAn mon) async {}
   @override
-  Future<void> luuQuan(String uid, Map<String, dynamic> dulieu) async {}
+  Future<void> luuQuan(
+    String uid,
+    Map<String, dynamic> dulieu, {
+    AnhQuan? anh,
+  }) async {
+    final q = cacquan.first;
+    final moi = QuanAn.tuDuLieu(q.id, {
+      'tenquan': q.tenquan, 'diachi': q.diachi, 'sodienthoai': q.sodienthoai,
+      'mota': q.mota, 'trangthai': q.trangthai, 'phigiaohang': q.phigiaohang,
+      'dangmocua': q.dangmocua, 'anhmau': q.anhmau, 'duongdananh': q.duongdananh,
+      ...dulieu,
+    });
+    cacquan = [moi, ...cacquan.skip(1)];
+    _quan.add(moi);
+  }
   @override
   Future<String> datHang(
     HoSoNguoiDung hoso,
@@ -108,5 +127,5 @@ class KhoBanHangThu implements KhoBanHang {
     String sodienthoai,
     String diachi,
   ) async {}
-  Future<void> dong() => _don.close();
+  Future<void> dong() async { await _don.close(); await _quan.close(); }
 }

@@ -51,8 +51,9 @@ class MonAn {
     this.nhom = 'Món chính',
     this.dangban = true,
     this.anhmau = 'pho',
+    this.duongdananh = '',
   });
-  final String id, quanid, tenmon, mota, nhom, anhmau;
+  final String id, quanid, tenmon, mota, nhom, anhmau, duongdananh;
   final int gia;
   final bool dangban;
   factory MonAn.tuDuLieu(String quanid, String id, Map<String, dynamic> d) =>
@@ -65,6 +66,7 @@ class MonAn {
         nhom: d['nhom'] as String? ?? 'Món chính',
         dangban: d['dangban'] as bool? ?? true,
         anhmau: d['anhmau'] as String? ?? 'pho',
+        duongdananh: d['duongdananh'] as String? ?? '',
       );
   Map<String, dynamic> get dulieu => {
     'tenmon': tenmon.trim(),
@@ -73,6 +75,7 @@ class MonAn {
     'nhom': nhom,
     'dangban': dangban,
     'anhmau': anhmau,
+    'duongdananh': duongdananh,
   };
 }
 

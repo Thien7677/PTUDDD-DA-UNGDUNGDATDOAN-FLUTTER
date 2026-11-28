@@ -12,6 +12,40 @@ service cloud.firestore {
     function dienthoai(s) { return s is string && s.matches('^(0[35789][0-9]{8}|[+]84[35789][0-9]{8})$'); }
     function khoa(s) { return s is string && s.matches('^[a-zA-Z0-9_-]{1,128}$'); }
     function anh(s) { return s in ['pho', 'pizza', 'com', 'ga', 'nuoc', '']; }
+    function anhquan(uid, vitri) {
+      return vitri == 'anhquanan/' + uid
+        && getAfter(/databases/$(csdl)/documents/anhquanan/$(uid)).data.loaitep == 'image/jpeg';
+    }
+    function anhmon(uid, monid, vitri) {
+      return vitri == '' || (vitri == 'anhmonan/' + uid + '/anhmon/' + monid
+        && getAfter(/databases/$(csdl)/documents/anhmonan/$(uid)/anhmon/$(monid)).data.loaitep == 'image/jpeg');
+    }
+    function anhnen() {
+      let d = request.resource.data;
+      return d.keys().hasAll(['dulieu','loaitep','ngaycapnhat'])
+        && d.keys().hasOnly(['dulieu','loaitep','ngaycapnhat'])
+        && d.loaitep == 'image/jpeg' && d.dulieu is string
+        && d.dulieu.size() > 4 && d.dulieu.size() <= 273068
+        && d.dulieu.matches('^/9j/[A-Za-z0-9+/]+={0,2}$')
+        && d.ngaycapnhat == request.time;
+    }
+    match /anhquanan/{uid} {
+      allow read: if dungnguoi(uid) || laadmin()
+        || (hoatdong() && get(/databases/$(csdl)/documents/quanan/$(uid)).data.trangthai == 'hoatdong');
+      allow create, update: if dungnguoi(uid) && anhnen()
+        && (lachuquan(uid) || (!exists(/databases/$(csdl)/documents/nguoidung/$(uid))
+          && getAfter(/databases/$(csdl)/documents/nguoidung/$(uid)).data.loaitaikhoan == 'chuquan'
+          && getAfter(/databases/$(csdl)/documents/nguoidung/$(uid)).data.trangthai == 'choduyet'))
+        && getAfter(/databases/$(csdl)/documents/quanan/$(uid)).data.duongdananh == 'anhquanan/' + uid;
+      allow delete: if false;
+    }
+    match /anhmonan/{uid}/anhmon/{monid} {
+      allow read: if lachuquan(uid) || laadmin()
+        || (hoatdong() && get(/databases/$(csdl)/documents/quanan/$(uid)).data.trangthai == 'hoatdong');
+      allow create, update: if lachuquan(uid) && khoa(monid) && anhnen()
+        && getAfter(/databases/$(csdl)/documents/quanan/$(uid)/monan/$(monid)).data.duongdananh == 'anhmonan/' + uid + '/anhmon/' + monid;
+      allow delete: if false;
+    }
     function hosomoi(uid) {
       let d = request.resource.data;
       return d.keys().hasAll(['tendangnhap','hoten','email','sodienthoai','loaitaikhoan','trangthai','ngaytao'])
@@ -70,16 +104,18 @@ service cloud.firestore {
       allow create: if quannoi(uid) && (
         (dungnguoi(uid) && request.resource.data.trangthai == 'choduyet'
           && !request.resource.data.keys().hasAny(['dulieumau'])
-          && request.resource.data.duongdananh in ['anhquanan/' + uid + '/anhdaidien.jpg','anhquanan/' + uid + '/anhdaidien.png','anhquanan/' + uid + '/anhdaidien.webp'])
+          && anhquan(uid, request.resource.data.duongdananh))
         || (laadmin() && request.resource.data.dulieumau == true
           && request.resource.data.trangthai in ['choduyet','hoatdong'] && anh(request.resource.data.anhmau)));
       allow update: if (
         lachuquan(uid)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tenquan','diachi','sodienthoai','mota','phigiaohang','dangmocua'])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tenquan','diachi','sodienthoai','mota','phigiaohang','dangmocua','duongdananh'])
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['duongdananh'])
+          || anhquan(uid, request.resource.data.duongdananh))
         && chuoi(request.resource.data.tenquan, 2, 120) && chuoi(request.resource.data.diachi, 8, 300)
         && dienthoai(request.resource.data.sodienthoai) && chuoi(request.resource.data.mota, 0, 500)
-        && request.resource.data.phigiaohang is int && request.resource.data.phigiaohang >= 0 && request.resource.data.phigiaohang <= 200000
-        && request.resource.data.dangmocua is bool
+        && request.resource.data.get('phigiaohang',15000) is int && request.resource.data.get('phigiaohang',15000) >= 0 && request.resource.data.get('phigiaohang',15000) <= 200000
+        && request.resource.data.get('dangmocua',true) is bool
       ) || (
         laadmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['trangthai'])
         && request.resource.data.trangthai in ['choduyet','hoatdong','bikhoa']
@@ -90,7 +126,8 @@ service cloud.firestore {
         allow read: if lachuquan(uid) || laadmin() || (hoatdong() && get(/databases/$(csdl)/documents/quanan/$(uid)).data.trangthai == 'hoatdong');
         allow create, update: if (lachuquan(uid) || laadmin())
           && request.resource.data.keys().hasAll(['tenmon','gia','mota','nhom','dangban','anhmau','ngaycapnhat'])
-          && request.resource.data.keys().hasOnly(['tenmon','gia','mota','nhom','dangban','anhmau','ngaycapnhat'])
+          && request.resource.data.keys().hasOnly(['tenmon','gia','mota','nhom','dangban','anhmau','ngaycapnhat','duongdananh'])
+          && anhmon(uid, monid, request.resource.data.get('duongdananh',''))
           && chuoi(request.resource.data.tenmon, 2, 120) && chuoi(request.resource.data.mota, 0, 500)
           && request.resource.data.gia is int && request.resource.data.gia > 0 && request.resource.data.gia <= 10000000
           && request.resource.data.nhom in ['Món chính','Đồ uống'] && request.resource.data.dangban is bool

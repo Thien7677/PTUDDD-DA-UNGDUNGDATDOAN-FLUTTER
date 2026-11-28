@@ -1,5 +1,6 @@
 import '../mohinh/ban_hang.dart';
 import '../mohinh/hoso_nguoidung.dart';
+import '../mohinh/anh_quan.dart';
 
 abstract class KhoBanHang {
   Stream<List<QuanAn>> theoDoiQuan({bool tatca = false});
@@ -7,9 +8,9 @@ abstract class KhoBanHang {
   Stream<List<MonAn>> theoDoiMon(String quanid);
   Stream<List<DonHang>> theoDoiDon(HoSoNguoiDung hoso);
   Stream<List<HoSoNguoiDung>> theoDoiNguoiDung();
-  Future<void> luuMon(MonAn mon);
+  Future<void> luuMon(MonAn mon, {AnhQuan? anh});
   Future<void> anMon(MonAn mon);
-  Future<void> luuQuan(String uid, Map<String, dynamic> dulieu);
+  Future<void> luuQuan(String uid, Map<String, dynamic> dulieu, {AnhQuan? anh});
   Future<String> datHang(
     HoSoNguoiDung hoso,
     GioHang gio, {

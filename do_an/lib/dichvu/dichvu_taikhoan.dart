@@ -9,11 +9,11 @@ import '../cauhinh/cauhinh_firebase.dart';
 import '../mohinh/hoso_nguoidung.dart';
 import 'kiemtra_dulieu.dart';
 import 'kho_taikhoan.dart';
+import 'dichvu_anh_firestore.dart';
 
 class DichVuTaiKhoan extends KhoTaiKhoan {
   FirebaseAuth? _xacthuc;
   FirebaseFirestore? _cosodulieu;
-  FirebaseStorage? _kholuutru;
   StreamSubscription<User?>? _theodoiphien;
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _theodoihoso;
   bool _dangxuly = false;
@@ -65,7 +65,6 @@ class DichVuTaiKhoan extends KhoTaiKhoan {
       }
       _xacthuc = xacthuc;
       _cosodulieu = cosodulieu;
-      _kholuutru = kholuutru;
       await xacthuc.setLanguageCode('vi');
       _theodoiphien = xacthuc.authStateChanges().listen((nguoidung) {
         if (!_dangxuly) _theoDoiHoSo(nguoidung);
@@ -152,29 +151,9 @@ class DichVuTaiKhoan extends KhoTaiKhoan {
         'Tên tài khoản đã có người dùng. Hãy chọn tên khác.',
       );
     }
-    Reference? anhdatai;
-    if (lachuquan) {
-      if (_kholuutru == null) {
-        throw const LoiTaiKhoan(
-          'Chưa cấu hình kho ảnh Firebase Storage. Cần kết nối kho ảnh để đăng ký quán.',
-        );
-      }
-      final anh = dulieu.anhquan!;
-      final vitri = _kholuutru!.ref(
-        'anhquanan/${nguoidung.uid}/anhdaidien.${anh.dinhdang}',
-      );
-      try {
-        await vitri.putData(
-          anh.dulieu,
-          SettableMetadata(contentType: anh.loaitep),
-        );
-        anhdatai = vitri;
-      } on FirebaseException catch (_) {
-        throw const LoiTaiKhoan(
-          'Chưa tải được ảnh quán. Kiểm tra mạng, Firebase Storage và quyền tải ảnh rồi thử lại.',
-        );
-      }
-    }
+    final anhdatai = lachuquan
+        ? await DichVuAnhFirestore.duLieu(dulieu.anhquan!)
+        : null;
     final nhomghi = _cosodulieu!.batch();
     nhomghi.set(chiso, {'manguoidung': nguoidung.uid});
     nhomghi.set(_cosodulieu!.collection('nguoidung').doc(nguoidung.uid), {
@@ -187,27 +166,26 @@ class DichVuTaiKhoan extends KhoTaiKhoan {
       'ngaytao': FieldValue.serverTimestamp(),
     });
     if (lachuquan) {
+      nhomghi.set(
+        _cosodulieu!.doc(DichVuAnhFirestore.anhQuan(nguoidung.uid)),
+        anhdatai!,
+      );
       nhomghi.set(_cosodulieu!.collection('quanan').doc(nguoidung.uid), {
         'chuquanid': nguoidung.uid,
         'tenquan': dulieu.tenquan.trim(),
         'diachi': dulieu.diachi.trim(),
-        'duongdananh': anhdatai!.fullPath,
+        'duongdananh': DichVuAnhFirestore.anhQuan(nguoidung.uid),
         'sodienthoai': KiemTraDuLieu.chuanHoaSoDienThoai(dulieu.sodienthoai),
         'mota': dulieu.mota.trim(),
         'trangthai': 'choduyet',
+        'phigiaohang': 15000,
+        'dangmocua': true,
         'ngaytao': FieldValue.serverTimestamp(),
       });
     }
     try {
       await nhomghi.commit();
     } catch (loi) {
-      if (anhdatai != null) {
-        try {
-          await anhdatai.delete();
-        } catch (_) {
-          /* Giữ ảnh nếu chưa xác nhận được quyền xóa. */
-        }
-      }
       if (loi is FirebaseException && loi.code == 'permission-denied') {
         // Một tài khoản khác có thể vừa giữ tên này sau bước kiểm tra ban đầu.
         final tenhientai = await chiso.get(

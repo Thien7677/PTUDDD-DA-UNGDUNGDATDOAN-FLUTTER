@@ -51,3 +51,6 @@ cauhinh_firebase.json
 
 # Tai khoan du lieu mau chi luu cuc bo
 .taikhoan_demo.json
+
+# Android build reports
+/android/build/

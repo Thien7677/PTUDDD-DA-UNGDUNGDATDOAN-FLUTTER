@@ -5,6 +5,8 @@ import '../mohinh/ban_hang.dart';
 import '../mohinh/hoso_nguoidung.dart';
 import 'thanhphan/ban_hang.dart';
 import 'thanhphan/chude.dart';
+import '../mohinh/anh_quan.dart';
+import 'thanhphan/chon_anh_banhang.dart';
 
 class QuanLyThucDon extends StatefulWidget {
   const QuanLyThucDon({super.key, required this.kho, required this.uid});
@@ -70,7 +72,12 @@ class _TrangThaiQuanLyThucDon extends State<QuanLyThucDon> {
                     children: [
                       Row(
                         children: [
-                          AnhMon(anhmau: m.anhmau, width: 76, height: 92),
+                          AnhMon(
+                            anhmau: m.anhmau,
+                            duongdananh: m.duongdananh,
+                            width: 76,
+                            height: 92,
+                          ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
@@ -125,6 +132,7 @@ class _TrangThaiQuanLyThucDon extends State<QuanLyThucDon> {
                                   mota: m.mota,
                                   nhom: m.nhom,
                                   anhmau: m.anhmau,
+                                  duongdananh: m.duongdananh,
                                   dangban: !m.dangban,
                                 ),
                               ),
@@ -158,7 +166,9 @@ class _TrangThaiSuaMon extends State<SuaMonAn> {
   late final _gia = TextEditingController(text: widget.mon?.gia.toString());
   late final _mota = TextEditingController(text: widget.mon?.mota);
   late String _nhom = widget.mon?.nhom ?? 'Món chính';
-  late String _anh = widget.mon?.anhmau ?? 'pho';
+  late final String _anh = widget.mon?.anhmau ?? '';
+  AnhQuan? _anhMoi;
+  bool _dangluu = false;
   late bool _dangban = widget.mon?.dangban ?? true;
   @override
   void dispose() {
@@ -184,7 +194,13 @@ class _TrangThaiSuaMon extends State<SuaMonAn> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  AnhMon(anhmau: _anh, height: 180),
+                  ChonAnhBanHang(
+                    nhan: 'Ảnh món ăn',
+                    anhmau: _anh,
+                    duongdananh: widget.mon?.duongdananh ?? '',
+                    danggui: _dangluu,
+                    onThayDoi: (anh) => _anhMoi = anh,
+                  ),
                   const SizedBox(height: 20),
                   TextFormField(
                     controller: _ten,
@@ -226,25 +242,6 @@ class _TrangThaiSuaMon extends State<SuaMonAn> {
                     onChanged: (v) => setState(() => _nhom = v!),
                   ),
                   const SizedBox(height: 20),
-                  DropdownButtonFormField<String>(
-                    initialValue: _anh,
-                    decoration: const InputDecoration(
-                      labelText: 'Ảnh minh họa',
-                    ),
-                    items: const [
-                      DropdownMenuItem(value: 'pho', child: Text('Phở / Mì')),
-                      DropdownMenuItem(value: 'com', child: Text('Cơm')),
-                      DropdownMenuItem(value: 'pizza', child: Text('Pizza')),
-                      DropdownMenuItem(value: 'ga', child: Text('Gà rán')),
-                      DropdownMenuItem(value: 'nuoc', child: Text('Đồ uống')),
-                      DropdownMenuItem(
-                        value: '',
-                        child: Text('Không có ảnh minh họa'),
-                      ),
-                    ],
-                    onChanged: (v) => setState(() => _anh = v!),
-                  ),
-                  const SizedBox(height: 14),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     title: const Text('Đang bán'),
@@ -259,19 +256,26 @@ class _TrangThaiSuaMon extends State<SuaMonAn> {
                     nhan: 'Lưu món ăn',
                     onNhan: () async {
                       if (!_khoa.currentState!.validate()) return;
-                      await widget.kho.luuMon(
-                        MonAn(
-                          id: widget.mon?.id ?? '',
-                          quanid: widget.uid,
-                          tenmon: _ten.text,
-                          gia: int.parse(_gia.text.trim()),
-                          mota: _mota.text,
-                          nhom: _nhom,
-                          anhmau: _anh,
-                          dangban: _dangban,
-                        ),
-                      );
-                      if (context.mounted) Navigator.pop(context);
+                      setState(() => _dangluu = true);
+                      try {
+                        await widget.kho.luuMon(
+                          MonAn(
+                            id: widget.mon?.id ?? '',
+                            quanid: widget.uid,
+                            tenmon: _ten.text,
+                            gia: int.parse(_gia.text.trim()),
+                            mota: _mota.text,
+                            nhom: _nhom,
+                            anhmau: _anh,
+                            duongdananh: widget.mon?.duongdananh ?? '',
+                            dangban: _dangban,
+                          ),
+                          anh: _anhMoi,
+                        );
+                        if (context.mounted) Navigator.pop(context);
+                      } finally {
+                        if (mounted) setState(() => _dangluu = false);
+                      }
                     },
                   ),
                 ],
@@ -378,6 +382,8 @@ class SuaThongTinQuan extends StatefulWidget {
 }
 
 class _TrangThaiSuaQuan extends State<SuaThongTinQuan> {
+  AnhQuan? _anhMoi;
+  bool _dangluu = false;
   final _khoa = GlobalKey<FormState>();
   late final _ten = TextEditingController(text: widget.quan.tenquan);
   late final _diachi = TextEditingController(text: widget.quan.diachi);
@@ -409,6 +415,14 @@ class _TrangThaiSuaQuan extends State<SuaThongTinQuan> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  ChonAnhBanHang(
+                    nhan: 'Ảnh quán ăn',
+                    anhmau: widget.quan.anhmau,
+                    duongdananh: widget.quan.duongdananh,
+                    danggui: _dangluu,
+                    onThayDoi: (anh) => _anhMoi = anh,
+                  ),
+                  const SizedBox(height: 20),
                   TextFormField(
                     controller: _ten,
                     validator: KiemTraDuLieu.tenquan,
@@ -469,17 +483,22 @@ class _TrangThaiSuaQuan extends State<SuaThongTinQuan> {
                     nhan: 'Lưu thông tin quán',
                     onNhan: () async {
                       if (!_khoa.currentState!.validate()) return;
-                      await widget.kho.luuQuan(widget.quan.id, {
-                        'tenquan': _ten.text.trim(),
-                        'diachi': _diachi.text.trim(),
-                        'sodienthoai': KiemTraDuLieu.chuanHoaSoDienThoai(
-                          _sdt.text,
-                        ),
-                        'mota': _mota.text.trim(),
-                        'phigiaohang': int.parse(_phi.text.trim()),
-                        'dangmocua': _mo,
-                      });
-                      if (context.mounted) Navigator.pop(context);
+                      setState(() => _dangluu = true);
+                      try {
+                        await widget.kho.luuQuan(widget.quan.id, {
+                          'tenquan': _ten.text.trim(),
+                          'diachi': _diachi.text.trim(),
+                          'sodienthoai': KiemTraDuLieu.chuanHoaSoDienThoai(
+                            _sdt.text,
+                          ),
+                          'mota': _mota.text.trim(),
+                          'phigiaohang': int.parse(_phi.text.trim()),
+                          'dangmocua': _mo,
+                        }, anh: _anhMoi);
+                        if (context.mounted) Navigator.pop(context);
+                      } finally {
+                        if (mounted) setState(() => _dangluu = false);
+                      }
                     },
                   ),
                 ],

@@ -70,7 +70,7 @@ async function chay(){
   const capnhat=(tk,d)=>ghi(tk,[sua('donhang/'+id,{...d,capnhatboi:tk.uid},['ngaycapnhat'])]);
   await kt('Không nhảy từ chờ xác nhận sang đã giao',async()=>{cam(await capnhat(chu,{trangthai:'dagiao'}));});
   await kt('Khách không tự xác nhận giao trước khi đang giao',async()=>{cam(await capnhat(khach,{trangthai:'dagiao'}));});
-  await kt('Chỉ quán được xác nhận nhận đơn',async()=>{cam(await capnhat(khach,{trangthai:'dangchuanbi'}));dat(await capnhat(chu,{trangthai:'dangchuanbi'}));});
+  await kt('Quán tạm dừng đơn mới vẫn được xử lý đơn cũ; khách không được nhận thay',async()=>{dat(await ghi(chu,[sua('quanan/'+chu.uid,{dangmocua:false})]));cam(await capnhat(khach,{trangthai:'dangchuanbi'}));dat(await capnhat(chu,{trangthai:'dangchuanbi'}));dat(await ghi(chu,[sua('quanan/'+chu.uid,{dangmocua:true})]));});
   await kt('Chưa đi giao không được xác nhận thu tiền',async()=>{cam(await capnhat(chu,{trangthaithanhtoan:'dathanhtoan'}));});
   await kt('Quán bắt đầu giao hàng',async()=>{dat(await capnhat(chu,{trangthai:'danggiao'}));});
   await kt('Khách xác nhận nhận hàng nhưng không xác nhận tiền cho quán',async()=>{dat(await capnhat(khach,{trangthai:'dagiao'}));assert.equal((await doc('donhang/'+id,chu)).dulieu.fields.trangthaithanhtoan.stringValue,'chuathanhtoan');cam(await capnhat(khach,{trangthaithanhtoan:'dathanhtoan'}));});

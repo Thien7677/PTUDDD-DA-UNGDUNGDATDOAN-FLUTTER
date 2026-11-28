@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const anhJpeg = require('./anh_thu.cjs');
 const maychu = process.env.FIRESTORE_EMULATOR_HOST;
 const maychuxacthuc = process.env.FIREBASE_AUTH_EMULATOR_HOST;
 if (!maychu || !maychuxacthuc || !/^(127\.0\.0\.1|localhost):/.test(maychu) || !/^(127\.0\.0\.1|localhost):/.test(maychuxacthuc)) {
@@ -33,10 +34,13 @@ function suatrangthai(duongdan, trangthai) {
 }
 const ten = tk => 'tk' + tk.uid.toLowerCase().slice(0,24);
 const hoso = (tk,loaitaikhoan='khachhang',trangthai='hoatdong') => ({hoten:'',tendangnhap:ten(tk),email:tk.email,sodienthoai:'0901234567',loaitaikhoan,trangthai});
-const quan = tk => ({chuquanid:tk.uid,tenquan:'Bếp Nhà An',diachi:'123 Nguyễn Huệ, Quận 1',duongdananh:`anhquanan/${tk.uid}/anhdaidien.png`,sodienthoai:'0901234567',mota:'',trangthai:'choduyet'});
+const quan = tk => ({chuquanid:tk.uid,tenquan:'Bếp Nhà An',diachi:'123 Nguyễn Huệ, Quận 1',duongdananh:`anhquanan/${tk.uid}`,sodienthoai:'0901234567',mota:'',trangthai:'choduyet'});
 const ghi = (tk,writes) => {
   const hsomoi = writes.find(w => w.currentDocument?.exists === false && w.update.name.endsWith('/nguoidung/'+tk.uid));
   if (hsomoi) writes.push({update:{name:`projects/demo-no-ne/databases/(default)/documents/tendangnhap/${hsomoi.update.fields.tendangnhap.stringValue}`,fields:truong({manguoidung:tk.uid})}});
+  if(writes.some(w=>w.update.name.endsWith('/quanan/'+tk.uid) && w.update.fields.duongdananh?.stringValue==='anhquanan/'+tk.uid)) {
+    writes.push({update:{name:`projects/demo-no-ne/databases/(default)/documents/anhquanan/${tk.uid}`,fields:truong({dulieu:anhJpeg,loaitep:'image/jpeg'})},updateTransforms:[{fieldPath:'ngaycapnhat',setToServerValue:'REQUEST_TIME'}]});
+  }
   return goi(goc+':commit',tk.token,{writes});
 };
 async function kiemtra(ten, ham) { await ham(); sodadat++; console.log('ĐẠT: '+ten); }
@@ -79,6 +83,12 @@ async function chay() {
   await kiemtra('Admin duyệt đồng thời tài khoản và quán',async()=>{const kq=await ghi(admin,[suatrangthai('nguoidung/'+chu.uid,'hoatdong'),suatrangthai('quanan/'+chu.uid,'hoatdong')]);assert.equal(kq.ma,200,JSON.stringify(kq));});
   await kiemtra('Admin có thể đọc hồ sơ để duyệt',async()=>{assert.equal((await goi(goc+'/nguoidung/'+chu.uid,admin.token,null,'GET')).ma,200);});
   await kiemtra('Admin được xem ảnh quán để duyệt',async()=>{const kq=await fetch(duongdananh+'?alt=media',{headers:{Authorization:`Bearer ${admin.token}`}});assert.equal(kq.status,200);});
+  for(const mo of [false,true]) await kiemtra('Quán đăng ký dùng phí mặc định được '+(mo?'bật':'tạm dừng')+' nhận đơn trực tiếp',async()=>{
+    const r=await ghi(chu,[{update:{name:`projects/demo-no-ne/databases/(default)/documents/quanan/${chu.uid}`,fields:{dangmocua:{booleanValue:mo}}},updateMask:{fieldPaths:['dangmocua']}}]);
+    assert.equal(r.ma,200,JSON.stringify(r));
+    const q=await goi(goc+'/quanan/'+chu.uid,chu.token,null,'GET');
+    assert.equal(q.dulieu.fields.dangmocua.booleanValue,mo);
+  });
   console.log(`HOÀN TẤT: ${sodadat} kiểm tra phân quyền đạt.`);
 }
 chay().catch(loi=>{console.error(loi);process.exitCode=1;});

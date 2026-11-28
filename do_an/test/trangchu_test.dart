@@ -41,6 +41,58 @@ Future<void> nhan(WidgetTester t, Finder f) async {
 }
 
 void main() {
+  testWidgets(
+    'Quán tạm dừng và bật lại; khách đang xem thực đơn nhận trạng thái mới',
+    (t) async {
+      final kho = KhoBanHangThu();
+      await t.pumpWidget(
+        UngDungNoNe(kho: taikhoan(LoaiTaiKhoan.chuquan), banhang: kho),
+      );
+      await t.pumpAndSettle();
+      expect(find.text('Đang nhận đơn'), findsOneWidget);
+      await t.tap(find.byType(SwitchListTile).first);
+      await t.pumpAndSettle();
+      expect(kho.cacquan.first.dangmocua, isFalse);
+      expect(find.text('Tạm dừng nhận đơn'), findsOneWidget);
+      await t.pumpWidget(
+        UngDungNoNe(kho: taikhoan(LoaiTaiKhoan.khachhang), banhang: kho),
+      );
+      await t.pumpAndSettle();
+      await nhan(t, find.text('Phở Hà Nội'));
+      expect(find.text('Quán tạm dừng nhận đơn'), findsOneWidget);
+      await t.scrollUntilVisible(
+        find.byWidgetPredicate(
+          (w) => w is IconButton && w.tooltip == 'Thêm Phở bò tái',
+        ),
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(
+        t
+            .widget<IconButton>(
+              find.byWidgetPredicate(
+                (w) => w is IconButton && w.tooltip == 'Thêm Phở bò tái',
+              ),
+            )
+            .onPressed,
+        isNull,
+      );
+      await kho.luuQuan('chuquan', {'dangmocua': true});
+      await t.pumpAndSettle();
+      expect(
+        t
+            .widget<IconButton>(
+              find.byWidgetPredicate(
+                (w) => w is IconButton && w.tooltip == 'Thêm Phở bò tái',
+              ),
+            )
+            .onPressed,
+        isNotNull,
+      );
+      await t.pumpWidget(const SizedBox());
+      await kho.dong();
+    },
+  );
   testWidgets('Khách đăng nhập vào khám phá và đặt COD, bắt buộc địa chỉ', (
     t,
   ) async {

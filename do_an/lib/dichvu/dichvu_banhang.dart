@@ -4,6 +4,8 @@ import '../mohinh/hoso_nguoidung.dart';
 import 'kiemtra_dulieu.dart';
 import 'kho_banhang.dart';
 import 'kho_taikhoan.dart';
+import '../mohinh/anh_quan.dart';
+import 'dichvu_anh_firestore.dart';
 
 class DichVuBanHang implements KhoBanHang {
   FirebaseFirestore get _db => FirebaseFirestore.instance;
@@ -61,10 +63,18 @@ class DichVuBanHang implements KhoBanHang {
             s.docs.map((d) => HoSoNguoiDung.tuDuLieu(d.id, d.data())).toList(),
       );
   @override
-  Future<void> luuMon(MonAn mon) async {
+  Future<void> luuMon(MonAn mon, {AnhQuan? anh}) async {
     final q = _db.collection('quanan').doc(mon.quanid).collection('monan');
     final d = mon.id.isEmpty ? q.doc() : q.doc(mon.id);
-    await d.set({...mon.dulieu, 'ngaycapnhat': FieldValue.serverTimestamp()});
+    final ghinhom = _db.batch();
+    final dulieu = {...mon.dulieu, 'ngaycapnhat': FieldValue.serverTimestamp()};
+    if (anh != null) {
+      final vitri = DichVuAnhFirestore.anhMon(mon.quanid, d.id);
+      ghinhom.set(_db.doc(vitri), await DichVuAnhFirestore.duLieu(anh));
+      dulieu['duongdananh'] = vitri;
+    }
+    ghinhom.set(d, dulieu);
+    await ghinhom.commit();
   }
 
   @override
@@ -75,8 +85,22 @@ class DichVuBanHang implements KhoBanHang {
       .doc(mon.id)
       .update({'dangban': false, 'ngaycapnhat': FieldValue.serverTimestamp()});
   @override
-  Future<void> luuQuan(String uid, Map<String, dynamic> dulieu) =>
-      _db.collection('quanan').doc(uid).update(dulieu);
+  Future<void> luuQuan(
+    String uid,
+    Map<String, dynamic> dulieu, {
+    AnhQuan? anh,
+  }) async {
+    final ghinhom = _db.batch();
+    final thongtin = Map<String, dynamic>.of(dulieu);
+    if (anh != null) {
+      final vitri = DichVuAnhFirestore.anhQuan(uid);
+      ghinhom.set(_db.doc(vitri), await DichVuAnhFirestore.duLieu(anh));
+      thongtin['duongdananh'] = vitri;
+    }
+    ghinhom.update(_db.collection('quanan').doc(uid), thongtin);
+    await ghinhom.commit();
+  }
+
   @override
   Future<String> datHang(
     HoSoNguoiDung hoso,
