@@ -82,3 +82,7 @@ flutter analyze
 flutter test --concurrency=1
 
 Kiểm tra phân quyền bằng Emulator và kịch bản trình bày chi tiết nằm trong HUONG_DAN_DEMO.txt. Emulator dùng dữ liệu tạm, còn bản chạy theo cấu hình nhóm dùng dữ liệu Firebase chung.
+
+TỔ CHỨC REPOSITORY
+
+Thư mục do_an/ chỉ chứa mã nguồn, cấu hình và kiểm thử của ứng dụng. Toàn bộ hướng dẫn và tài khoản demo nằm riêng trong tai_lieu/ ở gốc repository. Các lệnh Flutter trong tài liệu phải chạy từ thư mục do_an/.

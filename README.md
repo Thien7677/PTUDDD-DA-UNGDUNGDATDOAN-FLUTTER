@@ -6,10 +6,10 @@ Nhóm dùng **Flutter/Dart, Firebase Authentication và Cloud Firestore**, thanh
 
 Mã hiện tại nằm trong **[do_an/](do_an/)**, trên nhánh `feature/no-ne-firebase-demo`.
 
-- **[Hướng dẫn lấy mã và chạy chung Firebase](do_an/HUONG_DAN_NHOM.txt)**
-- **[Tài khoản và mật khẩu demo](do_an/TAI_KHOAN_DEMO.txt)**
-- [Kịch bản thử quán → khách đặt COD → admin](do_an/HUONG_DAN_DEMO.txt)
-- [Thiết lập Firebase/Android/ảnh Firestore](do_an/HUONG_DAN_FIREBASE.txt)
+- **[Hướng dẫn lấy mã và chạy chung Firebase](tai_lieu/HUONG_DAN_NHOM.txt)**
+- **[Tài khoản và mật khẩu demo](tai_lieu/TAI_KHOAN_DEMO.txt)**
+- [Kịch bản thử quán → khách đặt COD → admin](tai_lieu/HUONG_DAN_DEMO.txt)
+- [Thiết lập Firebase/Android/ảnh Firestore](tai_lieu/HUONG_DAN_FIREBASE.txt)
 
 ```powershell
 git clone --branch feature/no-ne-firebase-demo https://github.com/Thien7677/PTUDDD-DA-UNGDUNGDATDOAN-FLUTTER.git
@@ -19,7 +19,7 @@ flutter pub get
 flutter run -d chrome --dart-define-from-file=cauhinh_firebase.json
 ```
 
-Chạy Android bằng Android Studio: mở toàn bộ thư mục `do_an` chứa `pubspec.yaml`, thêm `--dart-define-from-file=cauhinh_firebase.json` trong Additional run args của cấu hình Flutter và chọn thiết bị Android. Xem [hướng dẫn Android và ảnh](do_an/HUONG_DAN_ANDROID_VA_ANH.txt). VS Code vẫn có cấu hình **No Nê · Firebase Web** để chạy Web bằng F5. Đã chạy thử với Flutter 3.41.5 / Dart 3.11.3.
+Chạy Android bằng Android Studio: mở toàn bộ thư mục `do_an` chứa `pubspec.yaml`, thêm `--dart-define-from-file=cauhinh_firebase.json` trong Additional run args của cấu hình Flutter và chọn thiết bị Android. Xem [hướng dẫn Android và ảnh](tai_lieu/HUONG_DAN_ANDROID_VA_ANH.txt). VS Code vẫn có cấu hình **No Nê · Firebase Web** để chạy Web bằng F5. Đã chạy thử với Flutter 3.41.5 / Dart 3.11.3.
 
 ## Tình trạng triển khai
 
