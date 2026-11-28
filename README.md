@@ -1,69 +1,38 @@
-# 🍔 Đồ Án Phát Triển Ứng Dụng Di Động: Ứng Dụng Đặt Đồ Ăn (Food Delivery App)
+# No Nê – Đồ án ứng dụng đặt đồ ăn Flutter
 
-Dự án ứng dụng di động đặt đồ ăn trực tuyến (Food Delivery), hỗ trợ người dùng khám phá món ăn, đặt hàng và theo dõi trạng thái đơn hàng một cách tiện lợi và nhanh chóng.
+Nhóm dùng **Flutter/Dart, Firebase Authentication và Cloud Firestore**, thanh toán **COD**.
 
-## 🛠 Công Nghệ Sử Dụng
-*   **Framework:** Flutter
-*   **Ngôn ngữ:** Dart
-*   **Quản lý trạng thái (State Management):**
-*   **Cơ sở dữ liệu / Backend:**
-*   **API & Dịch vụ tích hợp:** 
+## Bản chạy Firebase mới
 
-## 👨‍💻 Phân Công Nhiệm Vụ (Team Assignment)
-*   **Lead:**   
-*   **Thành viên 1:** 
-*   **Thành viên 2:** 
-*   **Thành viên 3:** 
+Mã hiện tại nằm trong **[do_an/](do_an/)**, trên nhánh `feature/no-ne-firebase-demo`.
 
+- **[Hướng dẫn lấy mã và chạy chung Firebase](do_an/HUONG_DAN_NHOM.md)**
+- **[Tài khoản và mật khẩu demo](do_an/TAI_KHOAN_DEMO.md)**
+- [Kịch bản thử quán → khách đặt COD → admin](do_an/HUONG_DAN_DEMO.md)
+- [Thiết lập Firebase/Android/Storage](do_an/HUONG_DAN_FIREBASE.md)
 
-## 🚀 Hướng Dẫn Cài Đặt (Dành cho Team)
-
-**Bước 1: Clone project về máy**
-```bash
-git clone https://github.com/Thien7677/PTUDDD-DA-UNGDUNGDATDOAN-FLUTTER.git
-cd PTUDDD-DA-UNGDUNGDATDOAN-FLUTTER
-```
-
-**Bước 2: Cài đặt các thư viện phụ thuộc (Dependencies)**
-```bash
+```powershell
+git clone --branch feature/no-ne-firebase-demo https://github.com/Thien7677/PTUDDD-DA-UNGDUNGDATDOAN-FLUTTER.git
+cd PTUDDD-DA-UNGDUNGDATDOAN-FLUTTER\do_an
+Copy-Item cauhinh_firebase.nhom.json cauhinh_firebase.json
 flutter pub get
+flutter run -d chrome --dart-define-from-file=cauhinh_firebase.json
 ```
 
-**Bước 3: Cấu hình môi trường / Backend (nếu có)**
-```bash
-```
+Mở đúng thư mục `do_an` trong VS Code và chọn **No Nê · Firebase Web** nếu chạy bằng F5. Đã chạy thử với Flutter 3.41.5 / Dart 3.11.3.
 
-**Bước 4: Chạy ứng dụng trên thiết bị giả lập hoặc máy thật**
-```bash
-flutter run
-```
+## Tình trạng triển khai
 
-## 🎨 Thiết kế giao diện — No Nê
+- Đăng nhập, đăng ký khách/quán và hồ sơ cá nhân; phân vai khách, chủ quán, admin.
+- Khách tìm quán theo tên, xem thực đơn, thêm giỏ thuộc một quán, đặt COD và theo dõi đơn.
+- Chủ quán nhận/xử lý đơn, xác nhận giao và thu tiền riêng, quản lý món/thông tin quán.
+- Admin duyệt/khóa quán, quản lý trạng thái khách và xem đơn.
+- Dữ liệu thật dùng chung trên Firebase `no-ne-food`. Ảnh mẫu dùng Unsplash; tải ảnh quán từ thiết bị cần thiết lập Storage.
+- Bản đồ/định vị và đánh giá sau đơn là phần làm tiếp. Android chưa cấu hình Firebase; bản hiện tại dùng Web để demo.
 
-Bản thiết kế mobile gồm **14 màn hình và trạng thái**, dùng nội dung tiếng Việt và tông cam–trắng, làm tài liệu tham khảo để triển khai Flutter.
+## Thiết kế và phần triển khai trước
 
-- [Xem bản thiết kế Figma](https://www.figma.com/design/mtO6YVZtLv1NuxffgAdecv)
-- [Bấm thử luồng đặt món](https://www.figma.com/proto/mtO6YVZtLv1NuxffgAdecv?node-id=3-40&starting-point-node-id=3%3A40&scaling=scale-down)
-- [Trao đổi và góp ý của nhóm tại Issue #2](https://github.com/Thien7677/PTUDDD-DA-UNGDUNGDATDOAN-FLUTTER/issues/2)
-
-### Các màn hình đã thiết kế
-
-1. Trang chủ và khám phá nhà hàng.
-2. Tìm kiếm nhà hàng, món ăn.
-3. Menu nhà hàng.
-4. Giỏ hàng.
-5. Xác nhận đặt hàng và thanh toán COD.
-6. Theo dõi trạng thái đơn.
-7. Đơn hàng của tôi.
-8. Đánh giá đơn đã giao.
-9. Đăng nhập.
-10. Chọn địa chỉ giao hàng.
-11. Quản lý đơn dành cho nhà hàng.
-12. Xác nhận đổi nhà hàng.
-13. Giỏ hàng sau khi đổi nhà hàng.
-14. Giỏ hàng trống.
-
-Đây là **nguyên mẫu giao diện**, chưa kết nối Firebase hoặc cổng thanh toán; bản đồ hiện là hình minh họa. Các thành viên xem và góp ý trước khi triển khai Flutter.
-
-**Truy cập:** Đã kiểm tra ngày 20/11/2026: bản thiết kế và nguyên mẫu đều mở xem được qua link khi chưa đăng nhập Figma. Việc bình luận hoặc chỉnh sửa cần đăng nhập và có quyền tương ứng.
-
+- [Thiết kế Figma No Nê](https://www.figma.com/design/mtO6YVZtLv1NuxffgAdecv)
+- [Nguyên mẫu luồng đặt món](https://www.figma.com/proto/mtO6YVZtLv1NuxffgAdecv?node-id=3-40&starting-point-node-id=3%3A40&scaling=scale-down)
+- [Issue thống nhất và góp ý của nhóm](https://github.com/Thien7677/PTUDDD-DA-UNGDUNGDATDOAN-FLUTTER/issues/2)
+- Thư mục [project/](project/) giữ phần Flutter/SQLite trước đó để nhóm đối chiếu khi gộp mã. Các thành viên xem Pull Request của bản Firebase trước khi thống nhất thư mục chính trên `main`.

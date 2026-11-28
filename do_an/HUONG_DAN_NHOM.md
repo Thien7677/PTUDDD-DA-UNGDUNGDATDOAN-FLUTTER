@@ -1,0 +1,93 @@
+# Hướng dẫn nhóm chạy No Nê với Firebase chung
+
+Bản Flutter/Firebase hiện tại nằm trong thư mục `do_an/` của repository, trên nhánh `feature/no-ne-firebase-demo`. Bản trong `project/` là phần triển khai trước đó để nhóm đối chiếu. Dự án Firebase dùng chung là **no-ne-food**.
+
+## 1. Lấy bản mới
+
+Máy chưa có repository:
+
+```powershell
+git clone --branch feature/no-ne-firebase-demo https://github.com/Thien7677/PTUDDD-DA-UNGDUNGDATDOAN-FLUTTER.git
+cd PTUDDD-DA-UNGDUNGDATDOAN-FLUTTER\do_an
+```
+
+Máy đã có repository: lưu hoặc commit phần đang làm trước khi đổi nhánh, rồi chạy từ thư mục gốc repository:
+
+```powershell
+git fetch origin
+git switch --track origin/feature/no-ne-firebase-demo
+cd do_an
+```
+
+Nếu đã có nhánh này ở máy, dùng `git switch feature/no-ne-firebase-demo` rồi `git pull --ff-only`.
+
+## 2. Chạy trong VS Code
+
+Môi trường đã chạy thử: **Flutter 3.41.5, Dart 3.11.3**. `pubspec.yaml` yêu cầu Dart từ 3.11.3; nên dùng cùng Flutter với nhóm.
+
+Mở chính thư mục `do_an` trong VS Code, nơi chứa `pubspec.yaml`. Trong Terminal:
+
+```powershell
+Copy-Item cauhinh_firebase.nhom.json cauhinh_firebase.json
+flutter pub get
+flutter run -d chrome --dart-define-from-file=cauhinh_firebase.json
+```
+
+Hoặc sau khi sao chép cấu hình và cài thư viện, chọn **Run and Debug → No Nê · Firebase Web → F5**. Không dùng địa chỉ localhost của máy Hiền; mỗi máy Flutter sẽ mở địa chỉ riêng.
+
+`cauhinh_firebase.nhom.json` là cấu hình Firebase client dùng chung cho bản Web. Nó không chứa tài khoản Google, khóa riêng service account hoặc phiên đăng nhập quản lý Firebase. `cauhinh_firebase.json` là bản cấu hình trên từng máy, được bỏ qua bởi Git.
+
+## 3. Dùng dữ liệu hiện có
+
+- Đăng nhập bằng email và mật khẩu trong [TAI_KHOAN_DEMO.md](TAI_KHOAN_DEMO.md).
+- Cả ba máy cùng kết nối Firebase **no-ne-food**, nên cùng thấy quán, thực đơn và đơn hàng theo quyền tài khoản. Không tạo dự án Firebase mới, không nhập lại collection.
+- Bộ mẫu ban đầu có Phở Hà Nội đã hoạt động với 6 món, Pizza Nhà Mình chờ duyệt với 2 món, một khách và 2 đơn COD. Trạng thái/số đơn có thể đổi khi thành viên thử ứng dụng.
+- Không cần chạy công cụ tạo admin hoặc nạp mẫu để đăng nhập thử. Các công cụ trong `congcu/` dành cho việc thiết lập, khôi phục bộ mẫu có chủ đích.
+- Có thể mở các trình duyệt/hồ sơ trình duyệt khác nhau để thử khách và quán đồng thời; các tab cùng hồ sơ có thể dùng chung phiên đăng nhập.
+
+## 4. Kịch bản thử
+
+1. Khách đăng nhập → chọn Phở Hà Nội → thêm món → mở giỏ → nhập thông tin người nhận → đặt COD.
+2. Chủ quán Phở đăng nhập → thấy đơn mới → nhận đơn → bắt đầu giao → xác nhận đã giao.
+3. Khách xem đơn cập nhật trạng thái; khách cũng có thể xác nhận đã nhận khi đơn đang giao.
+4. Quán xác nhận **đã thu COD** riêng. Xác nhận đã nhận/giao hàng không tự đổi trạng thái tiền.
+5. Chủ quán thêm/sửa món, tạm ngưng/mở bán và sửa thông tin quán/phí giao.
+6. Admin duyệt Pizza Nhà Mình; khách thấy quán sau khi được duyệt. Nếu đã được duyệt trong lần thử trước, dùng dữ liệu/trạng thái hiện có.
+
+Một giỏ thuộc một quán. Tối đa 4 món khác nhau trong một đơn và 20 phần mỗi món; Firestore Rules kiểm tra giá, phí, tổng tiền và quyền cập nhật tại máy chủ.
+
+## 5. Vào Firebase Console
+
+Thành viên đã được thêm vào dự án dùng **Gmail cá nhân của mình** mở Firebase Console và chọn `no-ne-food`. Tài khoản `admin@example.com` là quản trị viên **trong ứng dụng**, không phải Gmail dùng để quản lý Firebase Console.
+
+Việc sửa dữ liệu/Rules trong Console ảnh hưởng Firebase chung của cả nhóm. Thử đăng nhập và đặt món không cần triển khai lại Rules.
+
+## 6. Phần đã làm và phần tiếp theo
+
+Đã có đăng nhập/đăng ký, phân vai, hồ sơ cá nhân, tìm quán theo tên, thực đơn, giỏ, đặt COD, theo dõi đơn, quản lý quán/món và giao diện admin. Dữ liệu tài khoản và nghiệp vụ đang dùng Firebase thật.
+
+- Ảnh của bộ mẫu dùng ảnh minh họa từ Unsplash; Firestore lưu mã chọn ảnh, chưa có bản ảnh mẫu trong Firebase Storage.
+- Đăng ký quán bằng ảnh tải từ máy cần thiết lập Firebase Storage. Dự án đang dùng Spark; việc bật Storage/nâng gói chưa được thực hiện trong bản demo này.
+- Android chưa được cấu hình Firebase; trước mắt thử bằng Web. Khi thêm Android, đăng ký app package `com.example.do_an` trong chính dự án `no-ne-food` và xem [HUONG_DAN_FIREBASE.md](HUONG_DAN_FIREBASE.md).
+- Bản đồ thật, định vị và đánh giá sau đơn hàng là phần tiếp theo. Bản này dùng địa chỉ nhập văn bản.
+
+## 7. Làm tiếp bằng nhánh riêng
+
+Từ bản demo đã lấy, mỗi thành viên tạo nhánh riêng trước khi sửa:
+
+```powershell
+git switch -c feature/ten-phan-viec
+```
+
+Commit và mở Pull Request về nhánh nhóm đã thống nhất. Trước khi gộp bản này vào `main`, nhóm cần đối chiếu phần đang có ở `project/` để thống nhất một thư mục ứng dụng chính.
+
+## 8. Kiểm tra khi sửa mã
+
+Chạy từ thư mục `do_an`:
+
+```powershell
+flutter analyze
+flutter test --concurrency=1
+```
+
+Kiểm tra phân quyền bằng Emulator và kịch bản trình bày chi tiết nằm trong [HUONG_DAN_DEMO.md](HUONG_DAN_DEMO.md). Emulator dùng dữ liệu tạm, còn bản chạy theo cấu hình nhóm dùng dữ liệu Firebase chung.

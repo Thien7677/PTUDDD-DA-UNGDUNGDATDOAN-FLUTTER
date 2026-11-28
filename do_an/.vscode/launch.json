@@ -1,0 +1,40 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "No Nê · Firebase Web",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "chrome",
+      "toolArgs": [
+        "--dart-define-from-file=cauhinh_firebase.json"
+      ]
+    },
+    {
+      "name": "No Nê · Xem giao diện",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart"
+    },
+    {
+      "name": "No Nê · Firebase của nhóm",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "toolArgs": [
+        "--dart-define-from-file=cauhinh_firebase.json"
+      ]
+    },
+    {
+      "name": "No Nê · Firebase giả lập (web)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "chrome",
+      "toolArgs": [
+        "--dart-define=FIREBASE_DUNGGIALAP=true"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,154 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{csdl}/documents {
+    function dadangnhap() { return request.auth != null; }
+    function dungnguoi(uid) { return dadangnhap() && request.auth.uid == uid; }
+    function hoso() { return get(/databases/$(csdl)/documents/nguoidung/$(request.auth.uid)).data; }
+    function cohoso() { return dadangnhap() && exists(/databases/$(csdl)/documents/nguoidung/$(request.auth.uid)); }
+    function hoatdong() { return cohoso() && hoso().trangthai == 'hoatdong'; }
+    function laadmin() { return hoatdong() && hoso().loaitaikhoan == 'quantrivien'; }
+    function lachuquan(uid) { return dungnguoi(uid) && cohoso() && hoso().loaitaikhoan == 'chuquan' && hoso().trangthai in ['choduyet', 'hoatdong']; }
+    function chuoi(s, nho, lon) { return s is string && s.trim().size() >= nho && s.size() <= lon; }
+    function dienthoai(s) { return s is string && s.matches('^(0[35789][0-9]{8}|[+]84[35789][0-9]{8})$'); }
+    function khoa(s) { return s is string && s.matches('^[a-zA-Z0-9_-]{1,128}$'); }
+    function anh(s) { return s in ['pho', 'pizza', 'com', 'ga', 'nuoc', '']; }
+    function hosomoi(uid) {
+      let d = request.resource.data;
+      return d.keys().hasAll(['tendangnhap','hoten','email','sodienthoai','loaitaikhoan','trangthai','ngaytao'])
+        && d.keys().hasOnly(['tendangnhap','hoten','email','sodienthoai','loaitaikhoan','trangthai','ngaytao','dulieumau'])
+        && d.hoten == '' && chuoi(d.email, 3, 254) && dienthoai(d.sodienthoai)
+        && d.tendangnhap is string && d.tendangnhap.matches('^[a-z][a-z0-9_.]{3,29}$')
+        && d.ngaytao == request.time
+        && getAfter(/databases/$(csdl)/documents/tendangnhap/$(d.tendangnhap)).data.manguoidung == uid
+        && ((d.loaitaikhoan == 'khachhang' && d.trangthai == 'hoatdong')
+          || (d.loaitaikhoan == 'chuquan' && d.trangthai in ['choduyet','hoatdong']
+            && getAfter(/databases/$(csdl)/documents/quanan/$(uid)).data.chuquanid == uid
+            && getAfter(/databases/$(csdl)/documents/quanan/$(uid)).data.trangthai == d.trangthai));
+    }
+    match /nguoidung/{uid} {
+      allow read: if dungnguoi(uid) || laadmin();
+      allow create: if hosomoi(uid) && (
+        (dungnguoi(uid) && request.resource.data.email == request.auth.token.email
+          && !request.resource.data.keys().hasAny(['dulieumau'])
+          && (request.resource.data.loaitaikhoan == 'khachhang' || request.resource.data.trangthai == 'choduyet'))
+        || (laadmin() && request.resource.data.dulieumau == true));
+      allow update: if (
+        dungnguoi(uid) && resource.data.trangthai != 'bikhoa'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['hoten','sodienthoai','diachi'])
+        && chuoi(request.resource.data.hoten, 2, 100) && dienthoai(request.resource.data.sodienthoai)
+        && chuoi(request.resource.data.get('diachi',''), 0, 300)
+      ) || (
+        laadmin() && uid != request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['trangthai'])
+        && request.resource.data.trangthai in ['choduyet','hoatdong','bikhoa']
+        && (resource.data.loaitaikhoan != 'chuquan'
+          || getAfter(/databases/$(csdl)/documents/quanan/$(uid)).data.trangthai == request.resource.data.trangthai)
+      );
+      allow delete: if false;
+    }
+    match /tendangnhap/{ten} {
+      allow get: if dadangnhap();
+      allow list: if false;
+      allow create: if dadangnhap() && ten.matches('^[a-z][a-z0-9_.]{3,29}$')
+        && request.resource.data.keys().hasOnly(['manguoidung'])
+        && (request.resource.data.manguoidung == request.auth.uid || laadmin())
+        && getAfter(/databases/$(csdl)/documents/nguoidung/$(request.resource.data.manguoidung)).data.tendangnhap == ten;
+      allow update, delete: if false;
+    }
+    function quannoi(uid) {
+      let d = request.resource.data;
+      return d.keys().hasAll(['chuquanid','tenquan','diachi','sodienthoai','mota','trangthai','ngaytao'])
+        && d.keys().hasOnly(['chuquanid','tenquan','diachi','sodienthoai','mota','trangthai','ngaytao','duongdananh','anhmau','dulieumau','phigiaohang','dangmocua'])
+        && d.chuquanid == uid && d.ngaytao == request.time && chuoi(d.tenquan, 2, 120)
+        && chuoi(d.diachi, 8, 300) && chuoi(d.mota, 0, 500) && dienthoai(d.sodienthoai)
+        && d.get('phigiaohang',15000) is int && d.get('phigiaohang',15000) >= 0 && d.get('phigiaohang',15000) <= 200000 && d.get('dangmocua',true) is bool
+        && getAfter(/databases/$(csdl)/documents/nguoidung/$(uid)).data.loaitaikhoan == 'chuquan'
+        && getAfter(/databases/$(csdl)/documents/nguoidung/$(uid)).data.trangthai == d.trangthai;
+    }
+    match /quanan/{uid} {
+      allow read: if dungnguoi(uid) || laadmin() || (hoatdong() && resource.data.trangthai == 'hoatdong');
+      allow create: if quannoi(uid) && (
+        (dungnguoi(uid) && request.resource.data.trangthai == 'choduyet'
+          && !request.resource.data.keys().hasAny(['dulieumau'])
+          && request.resource.data.duongdananh in ['anhquanan/' + uid + '/anhdaidien.jpg','anhquanan/' + uid + '/anhdaidien.png','anhquanan/' + uid + '/anhdaidien.webp'])
+        || (laadmin() && request.resource.data.dulieumau == true
+          && request.resource.data.trangthai in ['choduyet','hoatdong'] && anh(request.resource.data.anhmau)));
+      allow update: if (
+        lachuquan(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['tenquan','diachi','sodienthoai','mota','phigiaohang','dangmocua'])
+        && chuoi(request.resource.data.tenquan, 2, 120) && chuoi(request.resource.data.diachi, 8, 300)
+        && dienthoai(request.resource.data.sodienthoai) && chuoi(request.resource.data.mota, 0, 500)
+        && request.resource.data.phigiaohang is int && request.resource.data.phigiaohang >= 0 && request.resource.data.phigiaohang <= 200000
+        && request.resource.data.dangmocua is bool
+      ) || (
+        laadmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['trangthai'])
+        && request.resource.data.trangthai in ['choduyet','hoatdong','bikhoa']
+        && getAfter(/databases/$(csdl)/documents/nguoidung/$(uid)).data.trangthai == request.resource.data.trangthai
+      );
+      allow delete: if false;
+      match /monan/{monid} {
+        allow read: if lachuquan(uid) || laadmin() || (hoatdong() && get(/databases/$(csdl)/documents/quanan/$(uid)).data.trangthai == 'hoatdong');
+        allow create, update: if (lachuquan(uid) || laadmin())
+          && request.resource.data.keys().hasAll(['tenmon','gia','mota','nhom','dangban','anhmau','ngaycapnhat'])
+          && request.resource.data.keys().hasOnly(['tenmon','gia','mota','nhom','dangban','anhmau','ngaycapnhat'])
+          && chuoi(request.resource.data.tenmon, 2, 120) && chuoi(request.resource.data.mota, 0, 500)
+          && request.resource.data.gia is int && request.resource.data.gia > 0 && request.resource.data.gia <= 10000000
+          && request.resource.data.nhom in ['Món chính','Đồ uống'] && request.resource.data.dangban is bool
+          && anh(request.resource.data.anhmau) && request.resource.data.ngaycapnhat == request.time;
+        allow delete: if false;
+      }
+    }
+    function donghople(ds, ids, i, quanid) {
+      let dong = ds.size() > i ? ds[i] : null;
+      let mon = dong != null ? get(/databases/$(csdl)/documents/quanan/$(quanid)/monan/$(dong.monid)).data : null;
+      return dong == null || (
+        dong.keys().hasOnly(['monid','tenmon','gia','soluong']) && dong.keys().size() == 4
+        && dong.monid == ids[i] && dong.soluong is int && dong.soluong >= 1 && dong.soluong <= 20
+        && mon.dangban == true && mon.gia == dong.gia && mon.tenmon == dong.tenmon
+      );
+    }
+    function dongtien(ds, i) { return ds.size() > i ? ds[i].gia * ds[i].soluong : 0; }
+    function donmoi() {
+      let d = request.resource.data;
+      let q = get(/databases/$(csdl)/documents/quanan/$(d.quanid)).data;
+      return hoatdong() && hoso().loaitaikhoan == 'khachhang'
+        && d.keys().hasOnly(['quanid','khachid','tenquan','nguoinhan','sodienthoai','diachi','ghichu','cacmon','mamon','tienmon','phigiaohang','tongtien','trangthai','thanhtoan','trangthaithanhtoan','ngaytao','ngaycapnhat','capnhatboi']) && d.keys().size() == 18
+        && d.khachid == request.auth.uid && khoa(d.quanid) && q.chuquanid == d.quanid && q.trangthai == 'hoatdong' && q.get('dangmocua',true) == true
+        && d.tenquan == q.tenquan && chuoi(d.nguoinhan,2,100) && dienthoai(d.sodienthoai) && chuoi(d.diachi,8,300) && chuoi(d.ghichu,0,300)
+        && d.cacmon is list && d.cacmon.size() >= 1 && d.cacmon.size() <= 4
+        && d.mamon is list && d.mamon.size() == d.cacmon.size() && d.mamon.toSet().size() == d.mamon.size()
+        && donghople(d.cacmon,d.mamon,0,d.quanid) && donghople(d.cacmon,d.mamon,1,d.quanid)
+        && donghople(d.cacmon,d.mamon,2,d.quanid) && donghople(d.cacmon,d.mamon,3,d.quanid)
+        && d.tienmon is int && d.tienmon == dongtien(d.cacmon,0) + dongtien(d.cacmon,1) + dongtien(d.cacmon,2) + dongtien(d.cacmon,3)
+        && d.phigiaohang == q.get('phigiaohang',15000) && d.tongtien == d.tienmon + d.phigiaohang
+        && d.trangthai == 'choxacnhan' && d.thanhtoan == 'cod' && d.trangthaithanhtoan == 'chuathanhtoan'
+        && d.ngaytao == request.time && d.ngaycapnhat == request.time && d.capnhatboi == request.auth.uid;
+    }
+    function xemdon(d) {
+      return (hoatdong() && (d.khachid == request.auth.uid || laadmin())) || lachuquan(d.quanid);
+    }
+    match /donhang/{donid} {
+      allow get: if (hoatdong() && !exists(/databases/$(csdl)/documents/donhang/$(donid))) || xemdon(resource.data);
+      allow list: if xemdon(resource.data);
+      allow create: if donmoi();
+      allow update: if hoatdong()
+        && request.resource.data.ngaycapnhat == request.time && request.resource.data.capnhatboi == request.auth.uid
+        && (
+          (hoso().loaitaikhoan == 'khachhang' && resource.data.khachid == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['trangthai','ngaycapnhat','capnhatboi'])
+            && ((resource.data.trangthai == 'choxacnhan' && request.resource.data.trangthai == 'dahuy')
+              || (resource.data.trangthai == 'danggiao' && request.resource.data.trangthai == 'dagiao')))
+          || (hoso().loaitaikhoan == 'chuquan' && resource.data.quanid == request.auth.uid
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['trangthai','trangthaithanhtoan','ngaycapnhat','capnhatboi'])
+            && (request.resource.data.trangthai == resource.data.trangthai
+              || (resource.data.trangthai == 'choxacnhan' && request.resource.data.trangthai in ['dangchuanbi','dahuy'])
+              || (resource.data.trangthai == 'dangchuanbi' && request.resource.data.trangthai in ['danggiao','dahuy'])
+              || (resource.data.trangthai == 'danggiao' && request.resource.data.trangthai == 'dagiao'))
+            && (request.resource.data.trangthaithanhtoan == resource.data.trangthaithanhtoan
+              || (resource.data.trangthai in ['danggiao','dagiao'] && resource.data.trangthaithanhtoan == 'chuathanhtoan' && request.resource.data.trangthaithanhtoan == 'dathanhtoan')))
+        );
+      allow delete: if false;
+    }
+    match /{duongdan=**} { allow read, write: if false; }
+  }
+}
